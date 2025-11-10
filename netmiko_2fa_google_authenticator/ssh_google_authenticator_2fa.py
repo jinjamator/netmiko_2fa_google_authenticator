@@ -1,4 +1,4 @@
-#  Copyright 2024 Wilhelm Putz, CANCOM Austria AG
+#  Copyright 2024 Wilhelm Putz
 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -170,6 +170,7 @@ class LinuxSSH2FAGoogle(LinuxSSH):
         pkey: Optional[paramiko.PKey] = None,
         passphrase: Optional[str] = None,
         disabled_algorithms: Optional[Dict[str, Any]] = None,
+        disable_sha2_fix: bool = False,
         allow_agent: bool = False,
         ssh_strict: bool = False,
         system_host_keys: bool = False,
@@ -195,56 +196,70 @@ class LinuxSSH2FAGoogle(LinuxSSH):
         allow_auto_change: bool = False,
         encoding: str = "utf-8",
         sock: Optional[socket.socket] = None,
+        sock_telnet: Optional[Dict[str, Any]] = None,
         auto_connect: bool = True,
         delay_factor_compat: bool = False,
+        disable_lf_normalization: bool = False,
+
         target_device_type: str = "linux",
         otp_secret: Optional[str] = None,
     ) -> None:
         self._target_device_type = target_device_type
         self._otp_secret = otp_secret
         super().__init__(
-            ip,
-            host,
-            username,
-            password,
-            secret,
-            port,
-            device_type,
-            verbose,
-            global_delay_factor,
-            global_cmd_verify,
-            use_keys,
-            key_file,
-            pkey,
-            passphrase,
-            disabled_algorithms,
-            allow_agent,
-            ssh_strict,
-            system_host_keys,
-            alt_host_keys,
-            alt_key_file,
-            ssh_config_file,
-            conn_timeout,
-            auth_timeout,
-            banner_timeout,
-            blocking_timeout,
-            timeout,
-            session_timeout,
-            read_timeout_override,
-            keepalive,
-            default_enter,
-            response_return,
-            serial_settings,
-            fast_cli,
-            _legacy_mode,
-            session_log,
-            session_log_record_writes,
-            session_log_file_mode,
-            allow_auto_change,
-            encoding,
-            sock,
-            auto_connect,
-            delay_factor_compat,
+        ip,
+        host,
+        username,
+        password,
+        secret,
+        port,
+        device_type,
+        verbose,
+        global_delay_factor,
+        global_cmd_verify,
+        use_keys,
+        key_file,
+        pkey,
+        passphrase,
+        disabled_algorithms,
+        disable_sha2_fix,
+        allow_agent,
+        ssh_strict,
+        system_host_keys,
+        alt_host_keys,
+        alt_key_file,
+        ssh_config_file,
+        #
+        # Connect timeouts
+        # ssh-connect --> TCP conn (conn_timeout) --> SSH-banner (banner_timeout)
+        #       --> Auth response (auth_timeout)
+        # For telnet 'conn_timeout' is mapped to main telnet timeout (which is used for both the
+        # telnet connection and for other blocking operations).
+        conn_timeout,
+        # Timeout to wait for authentication response
+        auth_timeout,
+        banner_timeout,  # Timeout to wait for the banner to be presented
+        # Other timeouts
+        blocking_timeout,  # Read blocking timeout
+        timeout,  # TCP connect timeout | overloaded to read-loop timeout
+        session_timeout,  # Used for locking/sharing the connection
+        read_timeout_override,
+        keepalive,
+        default_enter,
+        response_return,
+        serial_settings,
+        fast_cli,
+        _legacy_mode,
+        session_log,
+        session_log_record_writes,
+        session_log_file_mode,
+        allow_auto_change,
+        encoding,
+        sock,
+        sock_telnet,
+        auto_connect,
+        delay_factor_compat,
+        disable_lf_normalization,
         )
 
     def _open(self) -> None:
